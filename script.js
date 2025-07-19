@@ -1,7 +1,20 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+const startScreen = document.getElementById('startScreen');
+const startButton = document.getElementById('startButton');
+const hud = document.getElementById('hud');
+const vidasDiv = document.getElementById('vidas');
+
+let gameRunning = false;
+let gravity = 0.6;
+let jumpForce = -12;
+let groundY = 280; // chão onde o personagem fica
+
 // Imagens
+const tinomauroImg = new Image();
+tinomauroImg.src = 'imagens/tinomauro.png';
+
 const coracaoImg = new Image();
 coracaoImg.src = 'imagens/coracao.png';
 
@@ -11,148 +24,181 @@ estalactiteImg.src = 'imagens/estalactite.png';
 const estalagmitaImg = new Image();
 estalagmitaImg.src = 'imagens/estalagmita.png';
 
-const tinomauroImg = new Image();
-tinomauroImg.src = 'imagens/tinomauro.png';
-
-// Game variables
-let vidas = 3;
-let gameOver = false;
-
-const GRAVIDADE = 0.6;
-const PULO = -12;
-
 // Personagem
-const player = {
-    x: 100,
-    y: 300,
-    width: 50,
-    height: 70,
-    vy: 0,
-    noChao: false,
-    vidas: vidas,
+let tinomauro = {
+  x: 50,
+  y: groundY,
+  width: 50,
+  height: 50,
+  vy: 0,
+  onGround: true,
+  vidas: 3
 };
 
-// Estalactites e estalagmites (obstáculos)
-const estalactites = [
-    { x: 400, y: 0, width: 50, height: 60 },
-    { x: 650, y: 0, width: 50, height: 60 },
-];
+// Obstáculos
+let estalactites = [];
+let estalagmites = [];
+let obstaculoWidth = 40;
+let obstaculoHeight = 50;
+let obstaculoSpeed = 3;
 
-const estalagmites = [
-    { x: 520, y: 340, width: 50, height: 60 },
-    { x: 750, y: 340, width: 50, height: 60 },
-];
-
-// Atualiza as vidas na tela
-function atualizarVidas() {
-    const vidasDiv = document.getElementById('vidas');
-    vidasDiv.innerHTML = '';
-    for(let i = 0; i < player.vidas; i++) {
-        const img = document.createElement('img');
-        img.src = 'imagens/coracao.png';
-        img.style.width = '30px';
-        img.style.marginRight = '5px';
-        vidasDiv.appendChild(img);
-    }
+// Criar obstáculos iniciais
+function criarObstaculos() {
+  estalactites = [
+    {x: 600, y: 0},
+    {x: 900, y: 0},
+    {x: 1200, y: 0}
+  ];
+  estalagmites = [
+    {x: 750, y: groundY + obstaculoHeight - 10},
+    {x: 1050, y: groundY + obstaculoHeight - 10},
+    {x: 1350, y: groundY + obstaculoHeight - 10}
+  ];
 }
 
-// Detecta colisão entre retângulos
-function colisao(a, b) {
-    return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
-    );
+// Função para desenhar vidas
+function desenharVidas() {
+  vidasDiv.innerHTML = '';
+  for(let i = 0; i < tinomauro.vidas; i++) {
+    const vida = document.createElement('img');
+    vida.src = 'imagens/coracao.png';
+    vidasDiv.appendChild(vida);
+  }
 }
 
-// Atualiza o jogo a cada frame
-function atualizar() {
-    if(gameOver) return;
-
-    // Física do pulo e gravidade
-    player.vy += GRAVIDADE;
-    player.y += player.vy;
-
-    // Chão (fixo em y = 370)
-    if(player.y + player.height >= 370) {
-        player.y = 370 - player.height;
-        player.vy = 0;
-        player.noChao = true;
-    } else {
-        player.noChao = false;
-    }
-
-    // Verifica colisão com estalactites
-    for(let estalactite of estalactites) {
-        if(colisao(player, estalactite)) {
-            perderVida();
-        }
-    }
-
-    // Verifica colisão com estalagmites
-    for(let estalagmita of estalagmites) {
-        if(colisao(player, estalagmita)) {
-            perderVida();
-        }
-    }
-
-    desenhar();
-    requestAnimationFrame(atualizar);
-}
-
-// Função que perde uma vida e verifica game over
-function perderVida() {
-    if(gameOver) return;
-    player.vidas--;
-    atualizarVidas();
-    if(player.vidas <= 0) {
-        gameOver = true;
-        document.getElementById('msg').textContent = 'GAME OVER! O Tinomauro perdeu todas as vidas!';
-    }
-}
-
-// Função para desenhar tudo no canvas
-function desenhar() {
-    // Limpa o canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Desenha o chão
-    ctx.fillStyle = '#553322';
-    ctx.fillRect(0, 370, canvas.width, 30);
-
-    // Desenha as estalactites
-    for(let estalactite of estalactites) {
-        ctx.drawImage(estalactiteImg, estalactite.x, estalactite.y, estalactite.width, estalactite.height);
-    }
-
-    // Desenha as estalagmites
-    for(let estalagmite of estalagmites) {
-        ctx.drawImage(estalagmitaImg, estalagmite.x, estalagmite.y, estalagmite.width, estalagmite.height);
-    }
-
-    // Desenha o personagem
-    ctx.drawImage(tinomauroImg, player.x, player.y, player.width, player.height);
-}
-
-// Evento de pulo (toque e clique)
+// Controle do pulo
 function pular() {
-    if(player.noChao && !gameOver) {
-        player.vy = PULO;
+  if (tinomauro.onGround) {
+    tinomauro.vy = jumpForce;
+    tinomauro.onGround = false;
+  }
+}
+
+function colidiu(rect1, rect2) {
+  return (
+    rect1.x < rect2.x + obstaculoWidth &&
+    rect1.x + rect1.width > rect2.x &&
+    rect1.y < rect2.y + obstaculoHeight &&
+    rect1.y + rect1.height > rect2.y
+  );
+}
+
+// Game over
+function gameOver() {
+  alert('Game Over! Você perdeu todas as vidas.');
+  resetGame();
+}
+
+// Resetar jogo
+function resetGame() {
+  tinomauro.vidas = 3;
+  tinomauro.x = 50;
+  tinomauro.y = groundY;
+  tinomauro.vy = 0;
+  tinomauro.onGround = true;
+  criarObstaculos();
+  desenharVidas();
+  gameRunning = false;
+  canvas.style.display = 'none';
+  hud.style.display = 'none';
+  startScreen.style.display = 'block';
+}
+
+// Atualizar game
+function atualizar() {
+  if (!gameRunning) return;
+
+  // Atualiza posição do tinomauro
+  tinomauro.vy += gravity;
+  tinomauro.y += tinomauro.vy;
+
+  if (tinomauro.y >= groundY) {
+    tinomauro.y = groundY;
+    tinomauro.vy = 0;
+    tinomauro.onGround = true;
+  }
+
+  // Mover obstáculos para esquerda
+  estalactites.forEach((obs) => {
+    obs.x -= obstaculoSpeed;
+    if (obs.x + obstaculoWidth < 0) obs.x = canvas.width + Math.random() * 300 + 100;
+  });
+
+  estalagmites.forEach((obs) => {
+    obs.x -= obstaculoSpeed;
+    if (obs.x + obstaculoWidth < 0) obs.x = canvas.width + Math.random() * 300 + 100;
+  });
+
+  // Checar colisões
+  estalactites.forEach((obs) => {
+    if (colidiu(tinomauro, obs)) {
+      reduzirVida();
+      obs.x = canvas.width + Math.random() * 300 + 100;
     }
+  });
+
+  estalagmites.forEach((obs) => {
+    if (colidiu(tinomauro, obs)) {
+      reduzirVida();
+      obs.x = canvas.width + Math.random() * 300 + 100;
+    }
+  });
+
+  desenhar();
+  requestAnimationFrame(atualizar);
 }
 
-// Ouve cliques e toques na tela para pular
-window.addEventListener('keydown', (e) => {
-    if(e.code === 'Space') pular();
+function reduzirVida() {
+  tinomauro.vidas--;
+  desenharVidas();
+  if (tinomauro.vidas <= 0) {
+    gameOver();
+  }
+}
+
+// Desenhar tudo
+function desenhar() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Desenha chão
+  ctx.fillStyle = '#4a3c31';
+  ctx.fillRect(0, groundY + tinomauro.height, canvas.width, canvas.height - groundY);
+
+  // Desenha estalactites (teto)
+  estalactites.forEach((obs) => {
+    ctx.drawImage(estalactiteImg, obs.x, obs.y, obstaculoWidth, obstaculoHeight);
+  });
+
+  // Desenha estalagmites (chão)
+  estalagmites.forEach((obs) => {
+    ctx.drawImage(estalagmitaImg, obs.x, obs.y, obstaculoWidth, obstaculoHeight);
+  });
+
+  // Desenha tinomauro
+  ctx.drawImage(tinomauroImg, tinomauro.x, tinomauro.y, tinomauro.width, tinomauro.height);
+}
+
+// Eventos
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    pular();
+  }
 });
-window.addEventListener('touchstart', pular);
-window.addEventListener('mousedown', pular);
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  pular();
+});
 
-// Começa o jogo após carregar as imagens
-function iniciarJogo() {
-    atualizarVidas();
-    atualizar();
-}
+// Start do jogo
+startButton.addEventListener('click', () => {
+  startScreen.style.display = 'none';
+  canvas.style.display = 'block';
+  hud.style.display = 'block';
+  gameRunning = true;
+  criarObstaculos();
+  desenharVidas();
+  atualizar();
+});
 
-window.onload = iniciarJogo;
+// Inicializar
+resetGame();

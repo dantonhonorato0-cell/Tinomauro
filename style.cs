@@ -1,25 +1,29 @@
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #111;
-    color: #eee;
-    margin: 0;
-    padding: 20px;
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  text-align: center;
 }
 
-#gameCanvas {
-    background-color: #222;
-    display: block;
-    margin: 20px auto;
-    border: 3px solid #555;
+#startScreen {
+  margin-top: 100px;
+}
+
+button {
+  font-size: 24px;
+  padding: 10px 20px;
+  cursor: pointer;
 }
 
 #vidas {
-    margin-top: 10px;
+  position: fixed;
+  top: 10px;
+  left: 10px;
 }
 
-#msg {
-    font-size: 24px;
-    margin-top: 20px;
-    color: #f44;
+#vidas img {
+  width: 30px;
+  height: 30px;
+  margin-right: 5px;
 }
