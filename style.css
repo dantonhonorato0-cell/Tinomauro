@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: url('https://i.imgur.com/3z6l4Ga.png') no-repeat center center;
+  background-size: cover;
+  overflow: hidden;
+}
+
+#gameCanvas {
+  display: block;
+  margin: auto;
+  background: transparent;
+  width: 100vw;
+  height: 100vh;
+}
+
+#vidas {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.vida {
+  width: 30px;
+  height: 30px;
+}
