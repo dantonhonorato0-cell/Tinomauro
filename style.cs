@@ -1,29 +1,31 @@
 body {
   margin: 0;
-  background: #000;
+  background-color: #000;
+  font-family: monospace;
   color: #fff;
-  font-family: Arial, sans-serif;
   text-align: center;
 }
 
-#startScreen {
-  margin-top: 100px;
+#menu {
+  position: absolute;
+  width: 100%;
+  top: 30%;
+  z-index: 2;
 }
 
 button {
   font-size: 24px;
   padding: 10px 20px;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
 }
 
-#vidas {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-}
-
-#vidas img {
-  width: 30px;
-  height: 30px;
-  margin-right: 5px;
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: url('imagens/fundo.png') repeat-x;
+  background-size: cover;
 }
